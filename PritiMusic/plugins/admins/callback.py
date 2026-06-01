@@ -109,8 +109,8 @@ async def support_page_cb(client, CallbackQuery, _):
 @app.on_callback_query(filters.regex("gib_source"))
 async def gib_repo_callback(_, callback_query):
     try:
-        # SHIV BHAI: Niche wale string mein apna lamba wala Video File ID paste karein!
-        video_file_id = "BAACAgUAAxkBAAEp8WFqHUszcBhi255PaVPowqE-NO6K3QACBSIAAi898VShBdGOT0OuNDsE"
+        # SHIV BHAI: Jab aapko bot se NAYA ID mil jaye toh isme paste kar dena!
+        video_file_id = "BAACAgUAAxkBAAFLNGlqHVDs2RCymDci6kFRHvk-sqomEAACBSIAAi898VQgOqB3PTfx_DsE"
         
         await callback_query.edit_message_media(
             media=InputMediaVideo(
@@ -191,7 +191,7 @@ async def del_back_playlist(client, CallbackQuery, _):
             except:
                 pass
             command = counter
-            mention = "ᴜᴘᴠᴏᴛᴇs"
+            mention = "ᴜᴘᴠᴏ তাড়s"
         else:
             if CallbackQuery.from_user.id in upvoters[chat_id][CallbackQuery.message.id]:
                 await CallbackQuery.answer(_["admin_38"], show_alert=True)
@@ -309,3 +309,9 @@ async def markup_timer():
             except: continue
 
 asyncio.create_task(markup_timer())
+
+# --- YAHAN SE FILE ID NIKALNE WALA CODE START HOTA HAI ---
+@app.on_message(filters.video & filters.private)
+async def get_my_own_file_id(client, message):
+    await message.reply_text(f"**Mera Video File ID (Isko Copy Karo):**\n`{message.video.file_id}`")
+# --- YAHAN KHATAM ---

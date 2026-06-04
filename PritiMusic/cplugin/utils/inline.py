@@ -1,4 +1,5 @@
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from button import styled_button, ButtonStyle # Zaroori import
 
 # --- OPTION 1: Static ---
 buttons = InlineKeyboardMarkup(
@@ -10,7 +11,7 @@ buttons = InlineKeyboardMarkup(
             InlineKeyboardButton(text="▢", callback_data="end_cb"),
         ],
         [
-            InlineKeyboardButton(text="✯ CLONE NOW ✯", url="https://t.me/clone_MUSICrobot")
+            InlineKeyboardButton(text="『 ✦ 𝐂ʟᴏηє 𝐌є ✦ 』", url="https://t.me/clone_MUSICrobot")
         ],
     ]
 )
@@ -18,6 +19,7 @@ buttons = InlineKeyboardMarkup(
 close_key = InlineKeyboardMarkup(
     [
         [
+            InlineKeyboardButton(text="『 ♡ 𝐀ᴅᴅ 𝐌є 𝐁ᴀʙʏ ♡ 』", url="https://t.me/clone_MUSICrobot?startgroup=true"),
             InlineKeyboardButton(text="✯ CLOSE ✯", callback_data="close")
         ]
     ]
@@ -33,10 +35,18 @@ def stream_markup(chat_id):
                 InlineKeyboardButton(text="‣‣I", callback_data=f"ADMIN Skip|{chat_id}"),
                 InlineKeyboardButton(text="▢", callback_data=f"ADMIN Stop|{chat_id}"),
             ],
+            # --- NAYI ROW YAHAN ADD KI HAI ---
             [
-                InlineKeyboardButton(text="✯ CLONE NOW ✯", url="https://t.me/clone_MUSICrobot")
+                styled_button(text="<- 20s", callback_data=f"ADMIN SeekBack|{chat_id}", style=ButtonStyle.PRIMARY),
+                styled_button(text="🔁", callback_data=f"ADMIN Loop|{chat_id}", style=ButtonStyle.PRIMARY),
+                styled_button(text="🔀", callback_data=f"ADMIN Shuffle|{chat_id}", style=ButtonStyle.PRIMARY),
+                styled_button(text="20s + ->", callback_data=f"ADMIN SeekForward|{chat_id}", style=ButtonStyle.PRIMARY),
             ],
             [
+                InlineKeyboardButton(text="『 ✦ 𝐂ʟᴏηє 𝐌є ✦ 』", url="https://t.me/clone_MUSICrobot")
+            ],
+            [
+                InlineKeyboardButton(text="『 ♡ 𝐀ᴅᴅ 𝐌є 𝐁ᴀʙʏ ♡ 』", url="https://t.me/clone_MUSICrobot?startgroup=true"),
                 InlineKeyboardButton(text="✯ CLOSE ✯", callback_data="close")
             ]
         ]

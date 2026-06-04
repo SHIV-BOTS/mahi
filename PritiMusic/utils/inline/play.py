@@ -4,6 +4,9 @@ from PritiMusic import app
 import config
 from PritiMusic.utils.formatters import time_to_seconds
 
+# Import Pyrogram types
+from pyrogram.types import InlineKeyboardButton
+
 # Import your styled buttons here
 from button import styled_button, ButtonStyle
 
@@ -11,8 +14,16 @@ from button import styled_button, ButtonStyle
 # Helper for the Clone button
 def clone_button():
     return styled_button(
-        text="✯ CLONE NOW ✯", 
+        text="『 ✦ 𝐂ʟᴏηє 𝐌є ✦ 』", 
         url="https://t.me/clone_MUSICrobot",
+        style=ButtonStyle.SUCCESS
+    )
+
+# Helper for the Add Me button
+def add_me_button():
+    return styled_button(
+        text="『 ♡ 𝐀ᴅᴅ 𝐌є 𝐁ᴀʙʏ ♡ 』",
+        url="https://t.me/clone_MUSICrobot?startgroup=true",
         style=ButtonStyle.SUCCESS
     )
 
@@ -33,6 +44,7 @@ def track_markup(_, videoid, user_id, channel, fplay):
         ],
         [clone_button()],
         [
+            add_me_button(),
             styled_button(
                 text=_["CLOSE_BUTTON"],
                 callback_data=f"forceclose {videoid}|{user_id}",
@@ -47,40 +59,17 @@ def stream_markup_timer(_, chat_id, played, dur):
     played_sec = time_to_seconds(played)
     duration_sec = time_to_seconds(dur)
     
-    if duration_sec == 0:
-        percentage = 0
-    else:
-        percentage = (played_sec / duration_sec) * 100
-        
-    umm = math.floor(percentage)
-
-    if 0 <= umm <= 10:
-        bar = "◉—————————"
-    elif 10 < umm <= 20:
-        bar = "—◉————————"
-    elif 20 < umm <= 30:
-        bar = "——◉———————"
-    elif 30 < umm <= 40:
-        bar = "———◉——————"
-    elif 40 < umm <= 50:
-        bar = "————◉—————"
-    elif 50 < umm <= 60:
-        bar = "—————◉————"
-    elif 60 < umm <= 70:
-        bar = "——————◉———"
-    elif 70 < umm <= 80:
-        bar = "———————◉——"
-    elif 80 < umm <= 90:
-        bar = "————————◉—"
-    else:
-        bar = "—————————◉"
+    # 🔥 Progress Bar ▰▱
+    total_blocks = 10
+    filled_blocks = int((played_sec / duration_sec) * total_blocks) if duration_sec != 0 else 0
+    bar = "▰" * filled_blocks + "▱" * (total_blocks - filled_blocks)
 
     buttons = [
+        # ⏱ Timer + Bar
         [
-            styled_button(
+            InlineKeyboardButton(
                 text=f"{played} {bar} {dur}",
                 callback_data="GetTimer",
-                style=ButtonStyle.PRIMARY
             )
         ],
         [
@@ -89,11 +78,11 @@ def stream_markup_timer(_, chat_id, played, dur):
             styled_button(text="‣‣I", callback_data=f"ADMIN Skip|{chat_id}", style=ButtonStyle.PRIMARY),
         ],
         [
-            # ✅ Added Autoplay Button to Clone panel
-            styled_button(text="ᴀᴜᴛᴏᴘʟᴀʏ", callback_data=f"ADMIN Autoplay|{chat_id}", style=ButtonStyle.PRIMARY)
+            styled_button(text="❖ 𝐀ᴜᴛᴏ𝐏ʟᴀʏ ❖", callback_data=f"ADMIN Autoplay|{chat_id}", style=ButtonStyle.PRIMARY)
         ],
         [clone_button()],
         [
+            add_me_button(),
             styled_button(text=_["CLOSE_BUTTON"], callback_data="close", style=ButtonStyle.DANGER),
         ]
     ]
@@ -109,6 +98,7 @@ def stream_markup(_, chat_id):
         ],
         [clone_button()],
         [
+            add_me_button(),
             styled_button(text=_["CLOSE_BUTTON"], callback_data="close", style=ButtonStyle.DANGER),
         ]
     ]
@@ -131,6 +121,7 @@ def playlist_markup(_, videoid, user_id, ptype, channel, fplay):
         ],
         [clone_button()],
         [
+            add_me_button(),
             styled_button(
                 text=_["CLOSE_BUTTON"],
                 callback_data=f"forceclose {videoid}|{user_id}",
@@ -152,6 +143,7 @@ def livestream_markup(_, videoid, user_id, mode, channel, fplay):
         ],
         [clone_button()],
         [
+            add_me_button(),
             styled_button(
                 text=_["CLOSE_BUTTON"],
                 callback_data=f"forceclose {videoid}|{user_id}",
@@ -194,7 +186,7 @@ def slider_markup(_, videoid, user_id, query, query_type, channel, fplay):
                 style=ButtonStyle.PRIMARY
             ),
         ],
-        [clone_button()],
+        [clone_button(), add_me_button()],
     ]
     return buttons
 
@@ -207,6 +199,9 @@ def telegram_markup(_, chat_id):
                 callback_data=f"PanelMarkup None|{chat_id}",
                 style=ButtonStyle.PRIMARY
             ),
+        ],
+        [
+            add_me_button(),
             styled_button(text=_["CLOSEMENU_BUTTON"], callback_data="close", style=ButtonStyle.DANGER),
         ],
     ]
@@ -239,9 +234,8 @@ def queue_markup(_, videoid, chat_id):
             styled_button(
                 text="ʀᴇᴘʟᴀʏ ↺", callback_data=f"ADMIN Replay|{chat_id}", style=ButtonStyle.PRIMARY
             ),
-            # ✅ Added Autoplay Button
             styled_button(
-                text="ᴀᴜᴛᴏᴘʟᴀʏ", callback_data=f"ADMIN Autoplay|{chat_id}", style=ButtonStyle.PRIMARY
+                text="❖ 𝐀ᴜᴛᴏ𝐏ʟᴀʏ ❖", callback_data=f"ADMIN Autoplay|{chat_id}", style=ButtonStyle.PRIMARY
             ),
         ],
         [clone_button()],
@@ -271,11 +265,11 @@ def stream_markup2(_, chat_id):
             styled_button(text="‣‣I", callback_data=f"ADMIN Skip|{chat_id}", style=ButtonStyle.PRIMARY),
         ],
         [
-            # ✅ Added Autoplay Button to Clone panel
-            styled_button(text="ᴀᴜᴛᴏᴘʟᴀʏ", callback_data=f"ADMIN Autoplay|{chat_id}", style=ButtonStyle.PRIMARY)
+            styled_button(text="❖ 𝐀ᴜᴛᴏ𝐏ʟᴀʏ ❖", callback_data=f"ADMIN Autoplay|{chat_id}", style=ButtonStyle.PRIMARY)
         ],
         [clone_button()],
         [
+            add_me_button(),
             styled_button(text=_["CLOSEMENU_BUTTON"], callback_data="close", style=ButtonStyle.DANGER),
         ],
     ]
@@ -286,40 +280,15 @@ def stream_markup_timer2(_, chat_id, played, dur):
     played_sec = time_to_seconds(played)
     duration_sec = time_to_seconds(dur)
     
-    if duration_sec == 0:
-        percentage = 0
-    else:
-        percentage = (played_sec / duration_sec) * 100
-        
-    umm = math.floor(percentage)
-
-    if 0 <= umm <= 10:
-        bar = "◉——————————"
-    elif 10 < umm <= 20:
-        bar = "—◉—————————"
-    elif 20 < umm <= 30:
-        bar = "——◉————————"
-    elif 30 < umm <= 40:
-        bar = "———◉———————"
-    elif 40 < umm <= 50:
-        bar = "————◉——————"
-    elif 50 < umm <= 60:
-        bar = "—————◉—————"
-    elif 60 < umm <= 70:
-        bar = "——————◉————"
-    elif 70 < umm <= 80:
-        bar = "———————◉———"
-    elif 80 < umm <= 90:
-        bar = "————————◉——"
-    else:
-        bar = "——————————◉"
+    total_blocks = 10
+    filled_blocks = int((played_sec / duration_sec) * total_blocks) if duration_sec != 0 else 0
+    bar = "▰" * filled_blocks + "▱" * (total_blocks - filled_blocks)
 
     buttons = [
         [
-            styled_button(
+            InlineKeyboardButton(
                 text=f"{played} {bar} {dur}",
                 callback_data="GetTimer",
-                style=ButtonStyle.PRIMARY
             )
         ],
         [
@@ -328,11 +297,11 @@ def stream_markup_timer2(_, chat_id, played, dur):
             styled_button(text="‣‣I", callback_data=f"ADMIN Skip|{chat_id}", style=ButtonStyle.PRIMARY),
         ],
         [
-            # ✅ Added Autoplay Button to Clone panel
-            styled_button(text="ᴀᴜᴛᴏᴘʟᴀʏ", callback_data=f"ADMIN Autoplay|{chat_id}", style=ButtonStyle.PRIMARY)
+            styled_button(text="❖ 𝐀ᴜᴛᴏ𝐏ʟᴀʏ ❖", callback_data=f"ADMIN Autoplay|{chat_id}", style=ButtonStyle.PRIMARY)
         ],
         [clone_button()],
         [
+            add_me_button(),
             styled_button(text=_["CLOSEMENU_BUTTON"], callback_data="close", style=ButtonStyle.DANGER),
         ],
     ]
@@ -355,8 +324,7 @@ def panel_markup_1(_, videoid, chat_id):
                 style=ButtonStyle.PRIMARY
             ),
             styled_button(text="ʟᴏᴏᴘ ↺", callback_data=f"ADMIN Loop|{chat_id}", style=ButtonStyle.PRIMARY),
-            # ✅ Added Autoplay Button
-            styled_button(text="ᴀᴜᴛᴏᴘʟᴀʏ", callback_data=f"ADMIN Autoplay|{chat_id}", style=ButtonStyle.PRIMARY),
+            styled_button(text="❖ 𝐀ᴜᴛᴏ𝐏ʟᴀʏ ❖", callback_data=f"ADMIN Autoplay|{chat_id}", style=ButtonStyle.PRIMARY),
         ],
         [
             styled_button(
@@ -458,9 +426,8 @@ def panel_markup_5(_, videoid, chat_id):
             styled_button(
                 text="ʀᴇᴘʟᴀʏ", callback_data=f"ADMIN Replay|{chat_id}", style=ButtonStyle.PRIMARY
             ),
-            # ✅ Added Autoplay Button
             styled_button(
-                text="ᴀᴜᴛᴏᴘʟᴀʏ", callback_data=f"ADMIN Autoplay|{chat_id}", style=ButtonStyle.PRIMARY
+                text="❖ 𝐀ᴜᴛᴏ𝐏ʟᴀʏ ❖", callback_data=f"ADMIN Autoplay|{chat_id}", style=ButtonStyle.PRIMARY
             ),
         ],
         [clone_button()],
@@ -527,40 +494,15 @@ def panel_markup_4(_, vidid, chat_id, played, dur):
     played_sec = time_to_seconds(played)
     duration_sec = time_to_seconds(dur)
     
-    if duration_sec == 0:
-        percentage = 0
-    else:
-        percentage = (played_sec / duration_sec) * 100
-        
-    umm = math.floor(percentage)
-
-    if 0 <= umm <= 10:
-        bar = "◉——————————"
-    elif 10 < umm <= 20:
-        bar = "—◉—————————"
-    elif 20 < umm <= 30:
-        bar = "——◉————————"
-    elif 30 < umm <= 40:
-        bar = "———◉———————"
-    elif 40 < umm <= 50:
-        bar = "————◉——————"
-    elif 50 < umm <= 60:
-        bar = "—————◉—————"
-    elif 60 < umm <= 70:
-        bar = "——————◉————"
-    elif 70 < umm <= 80:
-        bar = "———————◉———"
-    elif 80 < umm <= 90:
-        bar = "————————◉——"
-    else:
-        bar = "——————————◉"
+    total_blocks = 10
+    filled_blocks = int((played_sec / duration_sec) * total_blocks) if duration_sec != 0 else 0
+    bar = "▰" * filled_blocks + "▱" * (total_blocks - filled_blocks)
 
     buttons = [
         [
-            styled_button(
+            InlineKeyboardButton(
                 text=f"{played} {bar} {dur}",
                 callback_data="GetTimer",
-                style=ButtonStyle.PRIMARY
             )
         ],
         [
@@ -577,9 +519,8 @@ def panel_markup_4(_, vidid, chat_id, played, dur):
             styled_button(
                 text="▷ ʀᴇsᴜᴍᴇ", callback_data=f"ADMIN Resume|{chat_id}", style=ButtonStyle.SUCCESS
             ),
-            # ✅ Added Autoplay Button
             styled_button(
-                text="ᴀᴜᴛᴏᴘʟᴀʏ", callback_data=f"ADMIN Autoplay|{chat_id}", style=ButtonStyle.PRIMARY
+                text="❖ 𝐀ᴜᴛᴏ𝐏ʟᴀʏ ❖", callback_data=f"ADMIN Autoplay|{chat_id}", style=ButtonStyle.PRIMARY
             ),
         ],
         [clone_button()],
@@ -594,19 +535,38 @@ def panel_markup_4(_, vidid, chat_id, played, dur):
     return buttons
 
 
-def panel_markup_clone(_, vidid, chat_id):
+def panel_markup_clone(_, vidid, chat_id, played, dur):
+    played_sec = time_to_seconds(played)
+    duration_sec = time_to_seconds(dur)
+    
+    total_blocks = 10
+    filled_blocks = int((played_sec / duration_sec) * total_blocks) if duration_sec != 0 else 0
+    bar = "▰" * filled_blocks + "▱" * (total_blocks - filled_blocks)
+
     buttons = [
+        [
+            InlineKeyboardButton(
+                text=f"{played} {bar} {dur}",
+                callback_data="GetTimer",
+            )
+        ],
         [
             styled_button(text="▷", callback_data=f"ADMIN Resume|{chat_id}", style=ButtonStyle.SUCCESS),
             styled_button(text="II", callback_data=f"ADMIN Pause|{chat_id}", style=ButtonStyle.DANGER),
             styled_button(text="‣‣I", callback_data=f"ADMIN Skip|{chat_id}", style=ButtonStyle.PRIMARY),
         ],
         [
-            # ✅ Added Autoplay Button to Clone panel
-            styled_button(text="ᴀᴜᴛᴏᴘʟᴀʏ", callback_data=f"ADMIN Autoplay|{chat_id}", style=ButtonStyle.PRIMARY)
+            InlineKeyboardButton(text="<- 20s", callback_data=f"ADMIN SeekBack|{chat_id}"),
+            InlineKeyboardButton(text="🔁", callback_data=f"ADMIN Loop|{chat_id}"),
+            InlineKeyboardButton(text="🔀", callback_data=f"ADMIN Shuffle|{chat_id}"),
+            InlineKeyboardButton(text="20s + ->", callback_data=f"ADMIN SeekForward|{chat_id}"),
+        ],
+        [
+            styled_button(text="❖ 𝐀ᴜᴛᴏ𝐏ʟᴀʏ ❖", callback_data=f"ADMIN Autoplay|{chat_id}", style=ButtonStyle.PRIMARY)
         ],
         [clone_button()],
         [
+            add_me_button(),
             styled_button(text=_["CLOSE_BUTTON"], callback_data="close", style=ButtonStyle.DANGER)
         ],
     ]

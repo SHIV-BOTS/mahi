@@ -393,7 +393,6 @@ class Call(PyTgCalls):
             await auto_clean(popped)
             
             # ⬇️ --- VIVAAN DUAL-FALLBACK AUTOPLAY LOGIC --- ⬇️
-            # This logic ONLY executes when the queue is empty, i.e., Autoplay is needed.
             if not check:
                 from PritiMusic.utils.database.autoplay import is_autoplay_group
                 
@@ -429,7 +428,7 @@ class Call(PyTgCalls):
                             "English": ["english", "pop song", "taylor swift", "justin bieber"]
                         }
 
-                        detected_lang = "Hindi"  # Default fallback
+                        detected_lang = "Hindi"
                         for lang, kws in keywords_map.items():
                             if any(kw in title_lower for kw in kws):
                                 detected_lang = lang
@@ -457,7 +456,7 @@ class Call(PyTgCalls):
                                     except ValueError:
                                         pass
                                 
-                                # Strict Limit ONLY for Autoplay: Accept songs between 30s and 15 mins (900s)
+                                # Strict Limit: 30s to 15 mins (900s)
                                 if 30 <= dur_sec <= 900:
                                     valid_choices.append((res, next_dur, dur_sec))
                                     
@@ -494,65 +493,34 @@ class Call(PyTgCalls):
                         LOGGER(__name__).warning(f"Smart Autoplay Error: {e}")
 
                     # ==========================================
-                    # Phase 2: NEW CRASH-PROOF FALLBACK (No YouTube.autoplay)
+                    # Phase 2: Native YouTube API Fallback 
                     # ==========================================
                     if not success:
                         try:
-                            from youtubesearchpython.__future__ import VideosSearch
-                            
-                            # Hum purane song ke title ke aage "audio" lagakar dobara normal search kar rahe hain
-                            fallback_query = f"{raw_title} audio"
-                            search = VideosSearch(fallback_query, limit=10)
-                            result = await search.next()
-                            
-                            if result and result.get("result"):
-                                valid_choices = []
-                                for res in result["result"]:
-                                    if not res.get("id") or str(res.get("id")) == last_vidid:
-                                        continue
-                                    
-                                    next_dur = str(res.get("duration") or "0:00")
-                                    dur_sec = 0
-                                    if next_dur and ":" in next_dur:
-                                        parts = next_dur.split(":")
-                                        try:
-                                            if len(parts) == 2:
-                                                dur_sec = int(parts[0]) * 60 + int(parts[1])
-                                            elif len(parts) == 3:
-                                                dur_sec = int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
-                                        except ValueError:
-                                            pass
-                                    
-                                    # Fallback me bhi limit laga di gayi hai
-                                    if 30 <= dur_sec <= 900:
-                                        valid_choices.append((res, next_dur, dur_sec))
-                                        
-                                if valid_choices:
-                                    chosen_tuple = random.choice(valid_choices)
-                                    next_track = chosen_tuple[0]
-                                    next_dur = chosen_tuple[1]
-                                    duration_sec = chosen_tuple[2]
-                                    
-                                    next_vidid = str(next_track.get("id") or "")
-                                    next_title = str(next_track.get("title") or "Unknown Title").title()
-                                    
-                                    db[chat_id].append({
-                                        "vidid": next_vidid,
-                                        "title": next_title,
-                                        "by": "Autoplay Fallback",
-                                        "chat_id": chat_id,
-                                        "file": f"vid_{next_vidid}",
-                                        "streamtype": popped.get("streamtype", "audio"),
-                                        "user_id": 0,
-                                        "seconds": duration_sec,
-                                        "dur": next_dur,
-                                        "old_dur": next_dur,
-                                        "old_second": 0,
-                                        "played": 0,
-                                        "client": popped.get("client")
-                                    })
+                            # Hum 15 minutes (900 seconds) ki limit pass kar rahe hain
+                            recommendation = await YouTube.autoplay(
+                                last_vidid=last_vidid,
+                                title=raw_title,
+                                max_duration=900,
+                            )
+                            if recommendation:
+                                db[chat_id].append({
+                                    "title": recommendation["title"],
+                                    "dur": recommendation["duration_min"],
+                                    "streamtype": popped.get("streamtype", "audio"),
+                                    "by": "Autoplay",
+                                    "user_id": 0,
+                                    "chat_id": chat_id,
+                                    "file": f"vid_{recommendation['vidid']}",
+                                    "vidid": recommendation["vidid"],
+                                    "seconds": recommendation["duration_sec"],
+                                    "old_dur": recommendation["duration_min"],
+                                    "old_second": 0,
+                                    "played": 0,
+                                    "client": popped.get("client")
+                                })
                         except Exception as e:
-                            LOGGER(__name__).warning(f"Fallback Autoplay Error: {e}")
+                            LOGGER(__name__).warning(f"Native Autoplay fallback failed: {e}")
 
             if not db.get(chat_id): 
                 await _clear_(chat_id)

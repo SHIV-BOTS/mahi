@@ -315,6 +315,8 @@ async def play_commnd(
                 "dur": dur,
             }
             
+            if not details:
+                return await mystic.edit_text("❌ **Error:** Failed to fetch track details.")
             if is_nsfw_content(details.get("title", "")):
                 await send_security_log(message, "ɴsғᴡ ᴠɪᴏʟᴀᴛɪᴏɴ (Telegram Audio)", details.get("title", ""))
                 return await mystic.edit_text("**🚫 sᴇᴄᴜʀɪᴛʏ ᴀʟᴇʀᴛ: ᴀᴅᴜʟᴛ ᴄᴏɴᴛᴇɴᴛ ɪs sᴛʀɪᴄᴛʟʏ ᴘʀᴏʜɪʙɪᴛᴇᴅ!**")
@@ -367,6 +369,8 @@ async def play_commnd(
                 "dur": dur,
             }
             
+            if not details:
+                return await mystic.edit_text("❌ **Error:** Failed to fetch track details.")
             if is_nsfw_content(details.get("title", "")):
                 await send_security_log(message, "ɴsғᴡ ᴠɪᴏʟᴀᴛɪᴏɴ (Telegram Video)", details.get("title", ""))
                 return await mystic.edit_text("**🚫 sᴇᴄᴜʀɪᴛʏ ᴀʟᴇʀᴛ: ᴀᴅᴜʟᴛ ᴄᴏɴᴛᴇɴᴛ ɪs sᴛʀɪᴄᴛʟʏ ᴘʀᴏʜɪʙɪᴛᴇᴅ!**")
@@ -446,6 +450,8 @@ async def play_commnd(
                     print(e)
                     return await mystic.edit_text(_["play_3"])
                     
+                if not details:
+                    return await mystic.edit_text("❌ **Error:** Failed to fetch track details from the server.")
                 if is_nsfw_content(details.get("title", "")):
                     await send_security_log(message, "ɴsғᴡ ᴠɪᴏʟᴀᴛɪᴏɴ", details.get("title", ""))
                     return await mystic.edit_text("**🚫 sᴇᴄᴜʀɪᴛʏ ᴀʟᴇʀᴛ: ᴀᴅᴜʟᴛ ᴄᴏɴᴛᴇɴᴛ ɪs sᴛʀɪᴄᴛʟʏ ᴘʀᴏʜɪʙɪᴛᴇᴅ!**")
@@ -460,6 +466,8 @@ async def play_commnd(
                     print(e)
                     return await mystic.edit_text(_["play_3"])
                     
+                if not details:
+                    return await mystic.edit_text("❌ **Error:** Failed to fetch track details from the server.")
                 if is_nsfw_content(details.get("title", "")):
                     await send_security_log(message, "ɴsғᴡ ᴠɪᴏʟᴀᴛɪᴏɴ", details.get("title", ""))
                     return await mystic.edit_text("**🚫 sᴇᴄᴜʀɪᴛʏ ᴀʟᴇʀᴛ: ᴀᴅᴜʟᴛ ᴄᴏɴᴛᴇɴᴛ ɪs sᴛʀɪᴄᴛʟʏ ᴘʀᴏʜɪʙɪᴛᴇᴅ!**")
@@ -478,6 +486,8 @@ async def play_commnd(
                 except:
                     return await mystic.edit_text(_["play_3"])
                     
+                if not details:
+                    return await mystic.edit_text("❌ **Error:** Failed to fetch track details from the server.")
                 if is_nsfw_content(details.get("title", "")):
                     await send_security_log(message, "ɴsғᴡ ᴠɪᴏʟᴀᴛɪᴏɴ", details.get("title", ""))
                     return await mystic.edit_text("**🚫 sᴇᴄᴜʀɪᴛʏ ᴀʟᴇʀᴛ: ᴀᴅᴜʟᴛ ᴄᴏɴᴛᴇɴᴛ ɪs sᴛʀɪᴄᴛʟʏ ᴘʀᴏʜɪʙɪᴛᴇᴅ!**")
@@ -521,6 +531,8 @@ async def play_commnd(
                 except:
                     return await mystic.edit_text(_["play_3"])
                     
+                if not details:
+                    return await mystic.edit_text("❌ **Error:** Failed to fetch track details from the server.")
                 if is_nsfw_content(details.get("title", "")):
                     await send_security_log(message, "ɴsғᴡ ᴠɪᴏʟᴀᴛɪᴏɴ", details.get("title", ""))
                     return await mystic.edit_text("**🚫 sᴇᴄᴜʀɪᴛʏ ᴀʟᴇʀᴛ: ᴀᴅᴜʟᴛ ᴄᴏɴᴛᴇɴᴛ ɪs sᴛʀɪᴄᴛʟʏ ᴘʀᴏʜɪʙɪᴛᴇᴅ!**")
@@ -546,6 +558,8 @@ async def play_commnd(
             except:
                 return await mystic.edit_text(_["play_3"])
                 
+            if not details:
+                return await mystic.edit_text("❌ **Error:** Failed to fetch track details from the server.")
             if is_nsfw_content(details.get("title", "")):
                 await send_security_log(message, "ɴsғᴡ ᴠɪᴏʟᴀᴛɪᴏɴ", details.get("title", ""))
                 return await mystic.edit_text("**🚫 sᴇᴄᴜʀɪᴛʏ ᴀʟᴇʀᴛ: ᴀᴅᴜʟᴛ ᴄᴏɴᴛᴇɴᴛ ɪs sᴛʀɪᴄᴛʟʏ ᴘʀᴏʜɪʙɪᴛᴇᴅ!**")
@@ -649,6 +663,8 @@ async def play_commnd(
         except:
             return await mystic.edit_text(_["play_3"])
             
+        if not details:
+            return await mystic.edit_text("❌ **Error:** Failed to fetch track details from the server.")
         if is_nsfw_content(details.get("title", "")):
             await send_security_log(message, "ɴsғᴡ ᴠɪᴏʟᴀᴛɪᴏɴ", details.get("title", ""))
             return await mystic.edit_text("**🚫 sᴇᴄᴜʀɪᴛʏ ᴀʟᴇʀᴛ: ᴀᴅᴜʟᴛ ᴄᴏɴᴛᴇɴᴛ ɪs sᴛʀɪᴄᴛʟʏ ᴘʀᴏʜɪʙɪᴛᴇᴅ!**")
@@ -790,6 +806,8 @@ async def play_music(client, CallbackQuery, _):
     except:
         return await mystic.edit_text(_["play_3"])
         
+    if not details:
+        return await mystic.edit_text("❌ **Error:** Failed to fetch track details from the server.")
     if is_nsfw_content(details.get("title", "")):
         return await mystic.edit_text("**🚫 sᴇᴄᴜʀɪᴛʏ ᴀʟᴇʀᴛ: ᴀᴅᴜʟᴛ ᴄᴏɴᴛᴇɴᴛ ɪs sᴛʀɪᴄᴛʟʏ ᴘʀᴏʜɪʙɪᴛᴇᴅ!**")
 
@@ -972,6 +990,11 @@ async def slider_queries(client, CallbackQuery, _):
             
         title, duration_min, thumbnail, vidid = await YouTube.slider(query, query_type)
         
+        if not title:
+            try: await CallbackQuery.message.delete()
+            except: pass
+            return await app.send_message(CallbackQuery.message.chat.id, "❌ **Error:** Failed to fetch track details.")
+
         if is_nsfw_content(title):
             try: await CallbackQuery.message.delete()
             except: pass
@@ -993,6 +1016,11 @@ async def slider_queries(client, CallbackQuery, _):
             
         title, duration_min, thumbnail, vidid = await YouTube.slider(query, query_type)
         
+        if not title:
+            try: await CallbackQuery.message.delete()
+            except: pass
+            return await app.send_message(CallbackQuery.message.chat.id, "❌ **Error:** Failed to fetch track details.")
+
         if is_nsfw_content(title):
             try: await CallbackQuery.message.delete()
             except: pass

@@ -1,15 +1,17 @@
 import uuid
 import asyncio
+import random
 from time import time
 from datetime import datetime
 from typing import Union
 import re
 import unicodedata
-import urllib.parse # ✅ Added for URL decoding protection
+import urllib.parse
 from urllib.parse import urlparse
 
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InputMediaPhoto, Message, InlineKeyboardButton
+from pyrogram.errors import MessageIdInvalid, MessageNotModified
 from pytgcalls.exceptions import NoActiveGroupCall
 
 import config
@@ -327,7 +329,12 @@ async def play_commnd(client, message: Message, _, chat_id, video, channel, play
                 await stream(client, _, mystic, user_id, details, chat_id, user_name, message.chat.id, streamtype="telegram", forceplay=fplay, userbot=userbot)
             except Exception as e:
                 print(e)
-                return await mystic.edit_text("❌ ᴇʀʀᴏʀ ᴘʀᴏᴄᴇssɪɴɢ ᴛᴇʟᴇɢʀᴀᴍ ᴀᴜᴅɪᴏ.")
+                try:
+                    return await mystic.edit_text("❌ ᴇʀʀᴏʀ ᴘʀᴏᴄᴇssɪɴɢ ᴛᴇʟᴇɢʀᴀᴍ ᴀᴜᴅɪᴏ.")
+                except MessageIdInvalid:
+                    return await message.reply_text("❌ ᴇʀʀᴏʀ ᴘʀᴏᴄᴇssɪɴɢ ᴛᴇʟᴇɢʀᴀᴍ ᴀᴜᴅɪᴏ.")
+                except MessageNotModified:
+                    return
             return await mystic.delete()
         return
 
@@ -356,7 +363,12 @@ async def play_commnd(client, message: Message, _, chat_id, video, channel, play
                 await stream(client, _, mystic, user_id, details, chat_id, user_name, message.chat.id, video=True, streamtype="telegram", forceplay=fplay, userbot=userbot)
             except Exception as e:
                 print(e)
-                return await mystic.edit_text("❌ ᴇʀʀᴏʀ ᴘʀᴏᴄᴇssɪɴɢ ᴛᴇʟᴇɢʀᴀᴍ ᴠɪᴅᴇᴏ.")
+                try:
+                    return await mystic.edit_text("❌ ᴇʀʀᴏʀ ᴘʀᴏᴄᴇssɪɴɢ ᴛᴇʟᴇɢʀᴀᴍ ᴠɪᴅᴇᴏ.")
+                except MessageIdInvalid:
+                    return await message.reply_text("❌ ᴇʀʀᴏʀ ᴘʀᴏᴄᴇssɪɴɢ ᴛᴇʟᴇɢʀᴀᴍ ᴠɪᴅᴇᴏ.")
+                except MessageNotModified:
+                    return
             return await mystic.delete()
         return
     
@@ -582,7 +594,12 @@ async def play_commnd(client, message: Message, _, chat_id, video, channel, play
             ex_type = type(e).__name__
             err = e if ex_type == "AssistantErr" else _["general_2"].format(ex_type)
             print(e)
-            return await mystic.edit_text(e)
+            try:
+                return await mystic.edit_text(str(err))
+            except MessageIdInvalid:
+                return await message.reply_text(str(err))
+            except MessageNotModified:
+                return
         await mystic.delete()
         if C_LOG_STATUS:
             try:
@@ -706,7 +723,12 @@ async def play_music(client: Client, CallbackQuery, _):
         await stream(client, _, mystic, CallbackQuery.from_user.id, details, chat_id, user_name, CallbackQuery.message.chat.id, video, streamtype="youtube", forceplay=ffplay, userbot=userbot)
     except Exception as e:
         print(e)
-        return await mystic.edit_text("❌ ᴇʀʀᴏʀ ᴘʟᴀʏɪɴɢ sᴛʀᴇᴀᴍ.")
+        try:
+            return await mystic.edit_text("❌ ᴇʀʀᴏʀ ᴘʟᴀʏɪɴɢ sᴛʀᴇᴀᴍ.")
+        except MessageIdInvalid:
+            return await CallbackQuery.message.reply_text("❌ ᴇʀʀᴏʀ ᴘʟᴀʏɪɴɢ sᴛʀᴇᴀᴍ.")
+        except MessageNotModified:
+            return
     return await mystic.delete()
 
 @Client.on_callback_query(filters.regex("ZEOmousAdmin") & ~BANNED_USERS)
@@ -813,7 +835,12 @@ async def play_playlists_command(client: Client, CallbackQuery, _):
         await stream(client, _, mystic, user_id, result, chat_id, user_name, CallbackQuery.message.chat.id, video, streamtype="playlist", spotify=spotify, forceplay=ffplay, userbot=userbot)
     except Exception as e:
         print(e)
-        return await mystic.edit_text("❌ ᴇʀʀᴏʀ ᴘʟᴀʏɪɴɢ ᴘʟᴀʏʟɪsᴛ.")
+        try:
+            return await mystic.edit_text("❌ ᴇʀʀᴏʀ ᴘʟᴀʏɪɴɢ ᴘʟᴀʏʟɪsᴛ.")
+        except MessageIdInvalid:
+            return await CallbackQuery.message.reply_text("❌ ᴇʀʀᴏʀ ᴘʟᴀʏɪɴɢ ᴘʟᴀʏʟɪsᴛ.")
+        except MessageNotModified:
+            return
     return await mystic.delete()
 
 @Client.on_callback_query(filters.regex("slider") & ~BANNED_USERS)

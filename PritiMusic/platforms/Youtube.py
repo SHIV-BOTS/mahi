@@ -1,6 +1,7 @@
 import asyncio
 import os
 import re
+import time # ✅ Imported for timestamping
 import yt_dlp
 import aiohttp
 import logging
@@ -17,8 +18,8 @@ LOGGER = logging.getLogger(__name__)
 API_URL = os.environ.get("SHRUTI_API_URL", "https://api.shrutibots.site")
 API_KEY = os.environ.get("SHRUTI_API_KEY", "ShrutiBotsC0WH1GowF2HkGoKv4F3y")
 
-def time_to_seconds(time):
-    stringt = str(time)
+def time_to_seconds(time_str):
+    stringt = str(time_str)
     return sum(int(x) * 60 ** i for i, x in enumerate(reversed(stringt.split(":"))))
 
 def get_safe_filename(title: str, default_id: str) -> str:
@@ -69,7 +70,7 @@ async def api_download(video_id: str, download_type: str, title: str = None) -> 
                 pass
         return None
 
-# 🛡️ FALLBACK METHOD (UPDATED FOR 1080p/720p/480p OPTIMIZATION & ANTI-BOT BYPASS)
+# 🛡️ FALLBACK METHOD (YOUTUBE)
 async def ytdl_fallback_download(link: str, download_type: str, title: str = None) -> str:
     os.makedirs(DOWNLOAD_DIR, exist_ok=True)
     video_id = link.split("v=")[-1].split("&")[0] if "v=" in link else link
@@ -80,16 +81,15 @@ async def ytdl_fallback_download(link: str, download_type: str, title: str = Non
     if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
         return file_path
 
-    # 🔥 MAGICAL LINE: Capped at 1080p, falls back to 720p, then best available mp4. Prevents 4K crashes.
     video_format = 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'
     
     ydl_opts = {
-        'format': video_format if download_type == "video" else 'bestaudio/bestvideo+bestaudio/best', # Audio block bypass
+        'format': video_format if download_type == "video" else 'bestaudio/bestvideo+bestaudio/best', 
         'outtmpl': file_path,
         'quiet': True,
         'no_warnings': True,
-        'cookiefile': 'cookies.txt', # ✅ Cookies for 503 bypass
-        'extractor_args': {'youtube': ['player_client=android', 'player_client=ios']}, # ✅ SPOOFING (Crucial for format error)
+        'cookiefile': 'cookies.txt', 
+        'extractor_args': {'youtube': ['player_client=android', 'player_client=ios']}, 
         'geo_bypass': True,
         'nocheckcertificate': True,
     }
@@ -112,15 +112,65 @@ async def ytdl_fallback_download(link: str, download_type: str, title: str = Non
         LOGGER.error(f"yt-dlp fallback error: {str(e)}")
         return None
 
-# 🎧 MAIN AUDIO DOWNLOADER
+# 🎵 SOURCE-HOPPING FALLBACK (SOUNDCLOUD)
+async def soundcloud_fallback_download(title: str) -> str:
+    """Bypass YouTube connectivity restrictions by fetching from alternative platforms like SoundCloud."""
+    if not title:
+        return None
+        
+    os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+    filename = get_safe_filename(title, f"sc_{int(time.time())}")
+    file_path = os.path.join(DOWNLOAD_DIR, f"{filename}.mp3")
+
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'outtmpl': file_path,
+        'quiet': True,
+        'no_warnings': True,
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }]
+    }
+    
+    try:
+        loop = asyncio.get_event_loop()
+        # yt-dlp natively supports scsearch to find tracks on SoundCloud
+        search_query = f"scsearch1:{title}"
+        await loop.run_in_executor(None, lambda: yt_dlp.YoutubeDL(ydl_opts).download([search_query]))
+        
+        if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
+            LOGGER.info(f"Source-Hopping successful! Downloaded from SoundCloud: {title}")
+            return file_path
+    except Exception as e:
+        LOGGER.error(f"SoundCloud fallback error: {str(e)}")
+        
+    return None
+
+
+# 🎧 MAIN AUDIO DOWNLOADER (UPDATED WITH SOURCE-HOPPING)
 async def download_song(link: str, title: str = None) -> str:
     video_id = link.split("v=")[-1].split("&")[0] if "v=" in link else link
     if not video_id or len(video_id) < 3:
         return None
         
+    # 1. Primary Source: ShrutiBots API
     api_result = await api_download(video_id, "audio", title)
     if api_result: return api_result
-    return await ytdl_fallback_download(link, "audio", title)
+    
+    # 2. Secondary Source: YouTube yt-dlp fallback
+    yt_result = await ytdl_fallback_download(link, "audio", title)
+    if yt_result: return yt_result
+    
+    # 3. 🚨 Source-Hopping: Try alternative platforms if YouTube returns errors
+    if title:
+        LOGGER.warning(f"YouTube failed for '{title}'. Initiating Source-Hopping to SoundCloud...")
+        sc_result = await soundcloud_fallback_download(title)
+        if sc_result: return sc_result
+        # Future Architecture: We can easily add Apple Music or JioSaavn fallbacks here!
+
+    return None
 
 # 🎥 MAIN VIDEO DOWNLOADER
 async def download_video(link: str, title: str = None) -> str:
@@ -191,7 +241,7 @@ class YouTubeAPI:
                 "quiet": True, 
                 "extract_flat": True, 
                 "cookiefile": "cookies.txt",
-                "extractor_args": {"youtube": ["player_client=android", "player_client=ios"]} # ✅ Client Spoofing
+                "extractor_args": {"youtube": ["player_client=android", "player_client=ios"]} 
             } 
             ydl = yt_dlp.YoutubeDL(ydl_opts)
             search_query = link if "youtube.com" in link or "youtu.be" in link else f"ytsearch1:{link}"
@@ -315,7 +365,7 @@ class YouTubeAPI:
                 "quiet": True, 
                 "extract_flat": True, 
                 "cookiefile": "cookies.txt",
-                "extractor_args": {"youtube": ["player_client=android", "player_client=ios"]} # ✅ Client Spoofing
+                "extractor_args": {"youtube": ["player_client=android", "player_client=ios"]}
             }
             ydl = yt_dlp.YoutubeDL(ydl_opts)
             search_query = link if "youtube.com" in link or "youtu.be" in link else f"ytsearch1:{link}"
@@ -352,7 +402,7 @@ class YouTubeAPI:
         ytdl_opts = {
             "quiet": True,
             "cookiefile": "cookies.txt", 
-            "extractor_args": {"youtube": ["player_client=android", "player_client=ios"]}, # ✅ Client Spoofing
+            "extractor_args": {"youtube": ["player_client=android", "player_client=ios"]},
             "external_downloader": "aria2c",
             "external_downloader_args": [
                 "-x", "16",            
@@ -480,7 +530,7 @@ class YouTubeAPI:
                     "quiet": True, 
                     "extract_flat": True, 
                     "cookiefile": "cookies.txt",
-                    "extractor_args": {"youtube": ["player_client=android", "player_client=ios"]} # ✅ Client Spoofing
+                    "extractor_args": {"youtube": ["player_client=android", "player_client=ios"]} 
                 } 
                 ydl = yt_dlp.YoutubeDL(ytdl_opts)
                 

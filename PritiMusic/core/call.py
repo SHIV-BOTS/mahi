@@ -11,7 +11,6 @@ from pyrogram.enums import ParseMode
 
 from pytgcalls import PyTgCalls
 from pytgcalls.types import Update, MediaStream, AudioQuality, VideoQuality
-# 🛑 FIX: Removed 'PyTgCallsException' import because it no longer exists in the latest py-tgcalls versions
 
 import config
 from PritiMusic import LOGGER, YouTube, app
@@ -268,7 +267,8 @@ class Call(PyTgCalls):
                 assistant_to_join = PyTgCalls(userbot, cache_duration=100)
                 await assistant_to_join.start()
                 
-                # 🛑 FIX: Bulletproof Stream End Fallback
+                # 🛑 FIX: Removed on_kicked, on_left, and on_closed_voice_chat 
+                # Kept only on_stream_end which is still supported in newer versions.
                 @assistant_to_join.on_stream_end()
                 async def stream_end_handler(client, update):
                     try:
@@ -276,12 +276,7 @@ class Call(PyTgCalls):
                         await self.change_stream(client, c_id)
                     except Exception as e:
                         LOGGER(__name__).error(f"Stream end error: {e}")
-                    
-                @assistant_to_join.on_kicked()
-                @assistant_to_join.on_closed_voice_chat()
-                @assistant_to_join.on_left()
-                async def stream_services_handler(_, chat_id: int):
-                    await self.stop_stream(chat_id)
+
                 self.custom_assistants[user_id] = assistant_to_join
         else:
             assistant_to_join = await group_assistant(self, chat_id)
@@ -294,7 +289,6 @@ class Call(PyTgCalls):
         language = await get_lang(chat_id)
         _ = get_string(language)
         
-        # 🛑 FIX: Updated exception block to catch standard exceptions dynamically
         try:
             await self._safe_join_call(assistant_to_join, chat_id, link, video)
         except Exception as e: 
@@ -594,13 +588,8 @@ class Call(PyTgCalls):
         if config.STRING1: await self.one.start()
 
     async def decorators(self):
-        @self.one.on_kicked()
-        @self.one.on_closed_voice_chat()
-        @self.one.on_left()
-        async def stream_services_handler(_, chat_id: int):
-            await self.stop_stream(chat_id)
-
-        # 🛑 FIX: Bulletproof Stream End Fallback
+        # 🛑 FIX: Removed on_kicked, on_left, and on_closed_voice_chat 
+        # Kept only on_stream_end which is still supported in newer versions.
         @self.one.on_stream_end()
         async def stream_end_handler1(client, update):
             try:

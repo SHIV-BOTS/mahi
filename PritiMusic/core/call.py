@@ -9,7 +9,8 @@ from pyrogram import Client
 from pyrogram.types import InlineKeyboardMarkup
 from pyrogram.enums import ParseMode
 
-from pytgcalls import PyTgCalls
+# 🛑 FIX: Added 'filters' from pytgcalls for v2.3.0+ event handling
+from pytgcalls import PyTgCalls, filters
 from pytgcalls.types import Update, MediaStream, AudioQuality, VideoQuality
 
 import config
@@ -132,7 +133,6 @@ class Call(PyTgCalls):
                 video_parameters=VideoQuality.SD_480p
             )
             await assistant_to_join.play(chat_id, stream)
-
 
     async def get_active_clients(self, chat_id):
         clients = []
@@ -267,16 +267,24 @@ class Call(PyTgCalls):
                 assistant_to_join = PyTgCalls(userbot, cache_duration=100)
                 await assistant_to_join.start()
                 
-                # 🛑 FIX: Removed on_kicked, on_left, and on_closed_voice_chat 
-                # Kept only on_stream_end which is still supported in newer versions.
-                @assistant_to_join.on_stream_end()
+                # 🛑 FIX: PyTgCalls v2.3.0+ Event Handlers for Assistant
+                @assistant_to_join.on_update(filters.stream_end)
                 async def stream_end_handler(client, update):
                     try:
                         c_id = update.chat_id if hasattr(update, "chat_id") else update
                         await self.change_stream(client, c_id)
                     except Exception as e:
                         LOGGER(__name__).error(f"Stream end error: {e}")
-
+                    
+                @assistant_to_join.on_update(filters.chat_update)
+                async def stream_services_handler(client, update):
+                    try:
+                        status = str(update.status).upper()
+                        if "KICKED" in status or "LEFT" in status or "CLOSED" in status:
+                            await self.stop_stream(update.chat_id)
+                    except:
+                        pass
+                
                 self.custom_assistants[user_id] = assistant_to_join
         else:
             assistant_to_join = await group_assistant(self, chat_id)
@@ -292,11 +300,7 @@ class Call(PyTgCalls):
         try:
             await self._safe_join_call(assistant_to_join, chat_id, link, video)
         except Exception as e: 
-            error_str = str(e).lower()
-            if "not found" in error_str or "groupcall" in error_str:
-                raise AssistantErr(f"VC Error: {e} - (Please check if Voice Chat is on)")
-            else:
-                raise AssistantErr(f"Join Call Error: {e}")
+            raise AssistantErr(f"VC Error: {e} - (Please check if Voice Chat is turned on in the group)")
         
         await add_active_chat(chat_id)
         await music_on(chat_id)
@@ -588,9 +592,17 @@ class Call(PyTgCalls):
         if config.STRING1: await self.one.start()
 
     async def decorators(self):
-        # 🛑 FIX: Removed on_kicked, on_left, and on_closed_voice_chat 
-        # Kept only on_stream_end which is still supported in newer versions.
-        @self.one.on_stream_end()
+        # 🛑 FIX: PyTgCalls v2.3.0+ Event Handlers for Main Client
+        @self.one.on_update(filters.chat_update)
+        async def stream_services_handler(client, update):
+            try:
+                status = str(update.status).upper()
+                if "KICKED" in status or "LEFT" in status or "CLOSED" in status:
+                    await self.stop_stream(update.chat_id)
+            except:
+                pass
+
+        @self.one.on_update(filters.stream_end)
         async def stream_end_handler1(client, update):
             try:
                 chat_id = update.chat_id if hasattr(update, "chat_id") else update

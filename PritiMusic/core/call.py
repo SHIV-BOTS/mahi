@@ -11,7 +11,7 @@ from pyrogram.enums import ParseMode
 
 from pytgcalls import PyTgCalls
 from pytgcalls.types import Update, MediaStream, AudioQuality, VideoQuality
-# 🛑 FIX: Saare pytgcalls exceptions imports permanently hata diye gaye hain taaki koi ImportError na aaye.
+# 🛑 FIX: Removed 'PyTgCallsException' import because it no longer exists in the latest py-tgcalls versions
 
 import config
 from PritiMusic import LOGGER, YouTube, app
@@ -294,11 +294,15 @@ class Call(PyTgCalls):
         language = await get_lang(chat_id)
         _ = get_string(language)
         
-        # 🛑 FIX: Bulletproof Exception Handling (No custom imports)
+        # 🛑 FIX: Updated exception block to catch standard exceptions dynamically
         try:
             await self._safe_join_call(assistant_to_join, chat_id, link, video)
         except Exception as e: 
-            raise AssistantErr(f"VC Error: {e} - (Please check if Voice Chat is turned on in the group)")
+            error_str = str(e).lower()
+            if "not found" in error_str or "groupcall" in error_str:
+                raise AssistantErr(f"VC Error: {e} - (Please check if Voice Chat is on)")
+            else:
+                raise AssistantErr(f"Join Call Error: {e}")
         
         await add_active_chat(chat_id)
         await music_on(chat_id)

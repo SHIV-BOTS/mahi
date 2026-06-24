@@ -69,7 +69,7 @@ async def clone_page_cb(client, CallbackQuery, _):
     )
     await CallbackQuery.edit_message_media(
         media=InputMediaPhoto(
-            media="https://files.catbox.moe/10zwqs.jpg", 
+            media="https://files.catbox.moe/f09yfp.jpg", 
             caption=clone_text
         ),
         reply_markup=InlineKeyboardMarkup(

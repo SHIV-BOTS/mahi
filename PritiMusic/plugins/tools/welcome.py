@@ -1,10 +1,12 @@
 import os
+import random
 from logging import getLogger
 from PIL import Image, ImageDraw, ImageFont, ImageEnhance
 from pyrogram import Client, filters, enums
+from pyrogram.enums import ButtonStyle
 from pyrogram.types import ChatMemberUpdated, InlineKeyboardMarkup, InlineKeyboardButton
 
-# 👇 Aapke PritiMusic repo se app import ho raha hai
+# Aapke PritiMusic repo se app import ho raha hai
 from PritiMusic import app 
 
 LOGGER = getLogger(__name__)
@@ -16,11 +18,9 @@ last_welcome_msg = {}  # {chat_id: message_id}
 
 # --- Image Processing Functions ---
 def create_circular_pfp(pfp, size=(500, 500), brightness=1.3):
-    # Image.ANTIALIAS is deprecated in new Pillow, use LANCZOS
     pfp = pfp.resize(size, Image.Resampling.LANCZOS).convert("RGBA")
     pfp = ImageEnhance.Brightness(pfp).enhance(brightness)
     
-    # Create circular mask
     mask = Image.new("L", size, 0)
     draw = ImageDraw.Draw(mask)
     draw.ellipse((0, 0) + size, fill=255)
@@ -29,16 +29,22 @@ def create_circular_pfp(pfp, size=(500, 500), brightness=1.3):
     return pfp
 
 def generate_welcome_image(pic_path, user_id):
-    # Apne repo me 'assets' folder banayein aur ye files wahan rakhein
     bg_path = "assets/wel2.png"
     font_path = "assets/font.ttf"
     
+    if not os.path.exists(bg_path):
+        LOGGER.warning("Background image 'wel2.png' not found in 'assets' folder.")
+        return None
+
     background = Image.open(bg_path).convert("RGBA")
     
     try:
         pfp = Image.open(pic_path).convert("RGBA")
     except Exception:
-        pfp = Image.open("assets/upic.png").convert("RGBA") # Default image
+        if os.path.exists("assets/upic.png"):
+            pfp = Image.open("assets/upic.png").convert("RGBA") 
+        else:
+            pfp = Image.new("RGBA", (500, 500), (255, 255, 255, 0)) 
         
     pfp = create_circular_pfp(pfp)
     draw = ImageDraw.Draw(background)
@@ -48,10 +54,7 @@ def generate_welcome_image(pic_path, user_id):
     except Exception:
         font = ImageFont.load_default()
         
-    # Text Draw Karna (Apne background ke hisab se coordinates adjust kar lein)
     draw.text((630, 450), f'ID: {user_id}', fill=(255, 255, 255), font=font)
-    
-    # Profile Pic paste karna
     background.paste(pfp, (48, 88), pfp)
     
     os.makedirs("downloads", exist_ok=True)
@@ -86,18 +89,16 @@ async def toggle_welcome(client, message):
 async def greet_new_member(client, member: ChatMemberUpdated):
     chat_id = member.chat.id
     
-    # Check if welcome is disabled (Default is ON)
     if welcome_state.get(chat_id, True) == False:
         return
 
-    # Check if someone actually joined
-    if not (member.new_chat_member and not member.old_chat_member and member.new_chat_member.status != enums.ChatMemberStatus.KICKED):
+    # KICKED ki jagah BANNED (Crash Fix)
+    if not (member.new_chat_member and not member.old_chat_member and member.new_chat_member.status != enums.ChatMemberStatus.BANNED):
         return
 
     user = member.new_chat_member.user
     count = await client.get_chat_members_count(chat_id)
 
-    # Old welcome message delete logic (spam rokne ke liye)
     if chat_id in last_welcome_msg:
         try:
             await last_welcome_msg[chat_id].delete()
@@ -105,15 +106,16 @@ async def greet_new_member(client, member: ChatMemberUpdated):
             pass
 
     try:
-        # PFP Download
-        try:
-            pic_path = await client.download_media(user.photo.big_file_id, file_name=f"pp{user.id}.png")
-        except AttributeError:
-            pic_path = "assets/upic.png"
+        pic_path = "assets/upic.png"
+        if user.photo:
+            try:
+                os.makedirs("downloads", exist_ok=True)
+                pic_path = await client.download_media(user.photo.big_file_id, file_name=f"downloads/pp{user.id}.png")
+            except Exception:
+                pass
 
         welcome_img = generate_welcome_image(pic_path, user.id)
-        
-        bot_username = client.me.username if client.me else "my_bot"
+        bot_username = app.username if hasattr(app, "username") and app.username else "PritiMusicBot"
         
         caption = f"""
 **⎊─────☵ ᴡᴇʟᴄᴏᴍᴇ ☵─────⎊**
@@ -129,20 +131,28 @@ async def greet_new_member(client, member: ChatMemberUpdated):
 
 **⎉──────▢✭ 侖 ✭▢──────⎉**
 """
+        # 👇 Random Style (Color) Generator Add Kiya Hai Yahan
+        styles = [ButtonStyle.PRIMARY, ButtonStyle.SUCCESS, ButtonStyle.DANGER]
+
+        # Text ekdum wahi hai jo aapne diya, bas color style random kar diya
         markup = InlineKeyboardMarkup([
-            [InlineKeyboardButton("๏ ᴠɪᴇᴡ ɴᴇᴡ ᴍᴇᴍʙᴇʀ ๏", url=f"tg://openmessage?user_id={user.id}")],
-            [InlineKeyboardButton("✙ ᴋɪᴅɴᴀᴘ ᴍᴇ ✙", url=f"https://t.me/{bot_username}?startgroup=true")],
+            [InlineKeyboardButton("๏ ᴠɪᴇᴡ ɴᴇᴡ ᴍᴇᴍʙᴇʀ ๏", url=f"tg://openmessage?user_id={user.id}", style=random.choice(styles))],
+            [InlineKeyboardButton("✙ ᴋɪᴅɴᴀᴘ ᴍᴇ ✙", url=f"https://t.me/{bot_username}?startgroup=true", style=random.choice(styles))],
         ])
 
-        msg = await client.send_photo(chat_id, photo=welcome_img, caption=caption, reply_markup=markup)
+        if welcome_img:
+            msg = await client.send_photo(chat_id, photo=welcome_img, caption=caption, reply_markup=markup)
+        else:
+            msg = await client.send_message(chat_id, text=caption, reply_markup=markup)
+
         last_welcome_msg[chat_id] = msg
         
-        # Cleanup: Generate hone ke baad files delete kar do taaki storage full na ho
-        if os.path.exists(welcome_img):
+        # Files Cleanup
+        if welcome_img and os.path.exists(welcome_img):
             os.remove(welcome_img)
-        if os.path.exists(pic_path) and pic_path != "assets/upic.png":
+        if pic_path and os.path.exists(pic_path) and "assets" not in pic_path:
             os.remove(pic_path)
 
     except Exception as e:
         LOGGER.error(f"Welcome Error: {e}")
-  
+        

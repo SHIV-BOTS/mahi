@@ -388,21 +388,24 @@ async def start_pm(client, message: Message, _):
                 botname=bot_mention,
                 username=a.username
             )
-        except:
+                except Exception:
             caption = custom_caption
-    else:
-       
-        Formatted_text = (
-    f"Hey {user_mention} 👋\n\n"
-    f"⦿ **ᴛʜɪs ɪs {bot_mention} 🎶 !**\n\n"
-    f"➻ **ᴧ ᴩʀєϻɪυϻ ᴛєʟєɢʀᴧϻ ϻυsɪᴄ ᴩʟᴧʏєʀ**\n"
-    f"➻ **ησ ʟᴧɢ | ᴧᴅ-ғʀєє | ʜɪ-ʀєs ᴧυᴅɪσ**\n"
-    f"➻ **24x7 ᴩʟᴧʏᴛɪϻє | sϻσσᴛʜ ᴩєʀғσʀϻᴧηᴄє**\n\n"
-    f"➻ **ᴄʟɪᴄᴋ ση ᴛʜє ʜєʟᴩ ʙυᴛᴛση ᴛσ ɢєᴛ ɪηғσ**\n"
-    f"    **ᴧʙσυᴛ ϻʏ ϻσᴅυʟєs ᴧηᴅ ᴄσϻϻᴧηᴅs...!**\n\n"
-    f"──────────────────\n"
-    
-        )
+        else:
+            caption = (
+                f"Hey {user_mention} 👋\n\n"
+                f"⦿ **ᴛʜɪs ɪs {bot_mention} 🎶 !**\n\n"
+                f"➻ **ᴧ ᴩʀєϻɪυϻ ᴛєʟєɢʀᴧϻ ϻυsɪᴄ ᴩʟᴧʏєʀ**\n"
+                f"➻ **ησ ʟᴧɢ | ᴧᴅ-ғʀєє | ʜɪ-ʀєs ᴧυᴅɪσ**\n"
+                f"➻ **24x7 ᴩʟᴧʏᴛɪϻє | sϻσσᴛʜ ᴩєʀғσʀϻᴧηᴄє**\n\n"
+                f"➻ **ᴄʟɪᴄᴋ ση ᴛʜє ʜєʟᴩ ʙυᴛᴛση ᴛσ ɢєᴛ ɪηғσ**\n"
+                f"    **ᴧʙσυᴛ ϻʏ ϻσᴅυʟєs ᴧηᴅ ᴄσϻϻᴧηᴅs...!**\n\n"
+                f"──────────────────\n"
+                f"✦ **ᴩσᴡєʀєᴅ ʙʏ »** {bot_mention}"
+            )
+            
+    photo = start_img if start_img else get_random_start_image()
+    await message.reply_photo(photo, caption=caption, reply_markup=markup, has_spoiler=True, parse_mode=ParseMode.HTML)
+        
         
         
     # 🔥 FIX: Removed message_effect_id entirely to prevent Pyrogram TypeError

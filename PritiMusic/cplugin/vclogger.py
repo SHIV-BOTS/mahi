@@ -13,7 +13,6 @@ from config import adminlist
 
 logger = logging.getLogger(__name__)
 
-# In-Memory Database (Database ki error hatane ke liye)
 enabled_chats: Set[int] = set()
 user_join_count: Dict[tuple, int] = {}
 user_cache: Dict[int, tuple] = {}
@@ -96,36 +95,25 @@ async def is_admin(chat_id: int, user_id: int) -> bool:
         return False
 
 @Lucky.one.on_update(fl.call_participant(GroupCallParticipant.Action.JOINED))
-@Lucky.two.on_update(fl.call_participant(GroupCallParticipant.Action.JOINED))
-@Lucky.three.on_update(fl.call_participant(GroupCallParticipant.Action.JOINED))
-@Lucky.four.on_update(fl.call_participant(GroupCallParticipant.Action.JOINED))
-@Lucky.five.on_update(fl.call_participant(GroupCallParticipant.Action.JOINED))
 async def participant_join(_, update: UpdatedGroupCallParticipant):
     chat_id = update.chat_id
     user_id = update.participant.user_id
 
-    # Check from local memory instead of database
     if chat_id not in enabled_chats:
         return
 
     await send_join_notification(chat_id, user_id)
 
 @Lucky.one.on_update(fl.call_participant(GroupCallParticipant.Action.LEFT))
-@Lucky.two.on_update(fl.call_participant(GroupCallParticipant.Action.LEFT))
-@Lucky.three.on_update(fl.call_participant(GroupCallParticipant.Action.LEFT))
-@Lucky.four.on_update(fl.call_participant(GroupCallParticipant.Action.LEFT))
-@Lucky.five.on_update(fl.call_participant(GroupCallParticipant.Action.LEFT))
 async def participant_left(_, update: UpdatedGroupCallParticipant):
     chat_id = update.chat_id
     user_id = update.participant.user_id
 
-    # Check from local memory instead of database
     if chat_id not in enabled_chats:
         return
 
     await send_leave_notification(chat_id, user_id)
 
-# 🔥 CHANGED HERE - Clone bots ke liye @Client.on_message lagaya gaya hai
 @Client.on_message(filters.command(["vclogger", "vclog"]) & filters.group)
 async def vclogger_cmd(client: Client, message: Message):
     chat_id = message.chat.id

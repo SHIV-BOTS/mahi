@@ -1,6 +1,6 @@
 import os
 import random
-import asyncio  # 🔥 ADDED HERE - Timer ke liye
+import asyncio
 from logging import getLogger
 from PIL import Image, ImageDraw, ImageFont, ImageEnhance
 from pyrogram import Client, filters, enums
@@ -14,7 +14,6 @@ welcome_state = {}  # {chat_id: True/False}
 last_welcome_msg = {}  # {chat_id: message_id}
 
 
-# 🔥 ADDED HERE - Message ko background mein delay ke baad delete karne ka function
 async def auto_delete_message(message, delay_seconds):
     try:
         await asyncio.sleep(delay_seconds)
@@ -23,8 +22,7 @@ async def auto_delete_message(message, delay_seconds):
         pass
 
 
-# --- Image Processing Functions ---
-def create_circular_pfp(pfp, size=(500, 500), brightness=1.3):
+def create_circular_pfp(pfp, size=(447, 447), brightness=1.3):
     pfp = pfp.resize(size, Image.Resampling.LANCZOS).convert("RGBA")
     pfp = ImageEnhance.Brightness(pfp).enhance(brightness)
     
@@ -35,8 +33,8 @@ def create_circular_pfp(pfp, size=(500, 500), brightness=1.3):
     pfp.putalpha(mask)
     return pfp
 
-def generate_welcome_image(pic_path, user_id):
-    # 🔥 CHANGED HERE - Path updated
+
+def generate_welcome_image(pic_path, user_id, uname):
     bg_path = "PritiMusic/assets/wel2.png"
     font_path = "PritiMusic/assets/font.ttf"
     
@@ -49,22 +47,25 @@ def generate_welcome_image(pic_path, user_id):
     try:
         pfp = Image.open(pic_path).convert("RGBA")
     except Exception:
-        # 🔥 CHANGED HERE - Default pic path updated
         if os.path.exists("PritiMusic/assets/upic.png"):
             pfp = Image.open("PritiMusic/assets/upic.png").convert("RGBA") 
         else:
-            pfp = Image.new("RGBA", (500, 500), (255, 255, 255, 0)) 
+            pfp = Image.new("RGBA", (447, 447), (255, 255, 255, 0)) 
         
     pfp = create_circular_pfp(pfp)
     draw = ImageDraw.Draw(background)
     
     try:
-        font = ImageFont.truetype(font_path, size=60)
+        font = ImageFont.truetype(font_path, size=40) 
     except Exception:
         font = ImageFont.load_default()
         
-    draw.text((630, 450), f'ID: {user_id}', fill=(255, 255, 255), font=font)
-    background.paste(pfp, (48, 88), pfp)
+    draw.text((730, 250), f'STATUS: MEMBER', fill=(255, 255, 255), font=font)
+    draw.text((730, 330), f'ID: {user_id}', fill=(255, 255, 255), font=font)
+    draw.text((730, 380), f"USERNAME: {uname}", fill=(255, 255, 255), font=font)
+    
+    pfp_position = (151, 139)
+    background.paste(pfp, pfp_position, pfp)
     
     os.makedirs("downloads", exist_ok=True)
     output_path = f"downloads/welcome_{user_id}.png"
@@ -72,10 +73,9 @@ def generate_welcome_image(pic_path, user_id):
     return output_path
 
 
-# --- Welcome Toggle Command ---
-# Yahan @app ki jagah @Client use kiya hai taaki clone bots command sune
+# 🔴 NOTE: Yahan `@Client.on_message` lagaya hai (Clone bots ke liye)
 @Client.on_message(filters.command("welcome") & filters.group)
-async def toggle_welcome(client: Client, message):
+async def toggle_welcome(client, message):
     user = await client.get_chat_member(message.chat.id, message.from_user.id)
     if user.status not in [enums.ChatMemberStatus.ADMINISTRATOR, enums.ChatMemberStatus.OWNER]:
         return await message.reply("**sᴏʀʀʏ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴇɴᴀʙʟᴇ ᴡᴇʟᴄᴏᴍᴇ ɴᴏᴛɪғɪᴄᴀᴛɪᴏɴ!**")
@@ -94,10 +94,9 @@ async def toggle_welcome(client: Client, message):
         await message.reply(f"**ᴅɪsᴀʙʟᴇᴅ ᴡᴇʟᴄᴏᴍᴇ ɴᴏᴛɪғɪᴄᴀᴛɪᴏɴ ɪɴ {message.chat.title}**")
 
 
-# --- Welcome Event Handler ---
-# Yahan bhi @app ki jagah @Client use kiya hai
+# 🔴 NOTE: Yahan bhi `@Client.on_chat_member_updated` lagaya hai
 @Client.on_chat_member_updated(filters.group, group=-3)
-async def greet_new_member(client: Client, member: ChatMemberUpdated):
+async def greet_new_member(client, member: ChatMemberUpdated):
     chat_id = member.chat.id
     
     if welcome_state.get(chat_id, True) == False:
@@ -109,7 +108,6 @@ async def greet_new_member(client: Client, member: ChatMemberUpdated):
     user = member.new_chat_member.user
     count = await client.get_chat_members_count(chat_id)
 
-    # Agar naya banda aaya aur purana welcome msg abhi bhi hai, toh use fauran delete kar dega
     if chat_id in last_welcome_msg:
         try:
             await last_welcome_msg[chat_id].delete()
@@ -117,7 +115,6 @@ async def greet_new_member(client: Client, member: ChatMemberUpdated):
             pass
 
     try:
-        # 🔥 CHANGED HERE - Fallback user picture path updated
         pic_path = "PritiMusic/assets/upic.png"
         if user.photo:
             try:
@@ -126,9 +123,10 @@ async def greet_new_member(client: Client, member: ChatMemberUpdated):
             except Exception:
                 pass
 
-        welcome_img = generate_welcome_image(pic_path, user.id)
+        uname = user.username or "None"
+        welcome_img = generate_welcome_image(pic_path, user.id, uname)
         
-        # Clone bot ka khud ka username nikalne ka code
+        # 🔴 NOTE: Clone bot ka apna username nikalne ke liye
         bot_info = await client.get_me()
         bot_username = bot_info.username
         
@@ -160,7 +158,6 @@ async def greet_new_member(client: Client, member: ChatMemberUpdated):
 
         last_welcome_msg[chat_id] = msg
         
-        # 🔥 ADDED HERE - Message send hone ke baad 120 seconds (2 minute) ka delete timer laga diya
         asyncio.create_task(auto_delete_message(msg, 120))
         
         # Files Cleanup
@@ -171,4 +168,4 @@ async def greet_new_member(client: Client, member: ChatMemberUpdated):
 
     except Exception as e:
         LOGGER.error(f"Welcome Error: {e}")
-    
+        

@@ -1,13 +1,13 @@
 import asyncio
 import logging
 from typing import Set, Dict
-from pyrogram import Client, filters
+from pyrogram import filters
 from pyrogram.types import Message
 from pytgcalls.types import UpdatedGroupCallParticipant, GroupCallParticipant
 from pytgcalls import filters as fl
 
 from PritiMusic import app, userbot
-from PritiMusic.core.call import Lucky 
+from PritiMusic.core.call import Lucky
 from PritiMusic.misc import SUDOERS
 from config import adminlist
 
@@ -23,8 +23,8 @@ async def delete_message_after_delay(chat_id: int, message_id: int):
     try:
         await asyncio.sleep(DELETE_DELAY)
         await app.delete_messages(chat_id, message_id)
-    except:
-        pass
+    except Exception as e:
+        logger.error(f"Failed to delete message: {e}")
 
 async def get_user_info(chat_id: int, user_id: int) -> tuple:
     if user_id in user_cache:
@@ -41,7 +41,7 @@ async def get_user_info(chat_id: int, user_id: int) -> tuple:
             if user.last_name:
                 name += f" {user.last_name}"
             username = f"@{user.username}" if user.username else "Iɢɴᴏʀᴇᴅ"
-    except:
+    except Exception:
         pass
 
     user_cache[user_id] = (name, username)
@@ -58,15 +58,18 @@ async def send_join_notification(chat_id: int, user_id: int):
     text = (
         "<b>#JoinVideoChat</b>\n\n"
         f"<b>● ɴᴀᴍᴇ ➛</b> {mention}\n"
-        f"<b>● ɪᴅ ➛</b><code>{user_id}</code>\n"
+        f"<b>● ɪᴅ ➛</b> <code>{user_id}</code>\n"
         f"<b>● ᴜsᴇʀɴᴀᴍᴇ ➛</b> {username}"
     )
 
     if count > 1:
         text += f"\n\n<b>🔁 ᴊᴏɪɴ ᴄᴏᴜɴᴛ ➛</b> <code>{count}</code>"
 
-    msg = await app.send_message(chat_id, text)
-    asyncio.create_task(delete_message_after_delay(chat_id, msg.id))
+    try:
+        msg = await app.send_message(chat_id, text)
+        asyncio.create_task(delete_message_after_delay(chat_id, msg.id))
+    except Exception as e:
+        logger.error(f"Join notification error: {e}")
 
 async def send_leave_notification(chat_id: int, user_id: int):
     name, username = await get_user_info(chat_id, user_id)
@@ -75,12 +78,15 @@ async def send_leave_notification(chat_id: int, user_id: int):
     text = (
         "<b>#LeaveVideoChat</b>\n\n"
         f"<b>● ɴᴀᴍᴇ ➛</b> {mention}\n"
-        f"<b>● ɪᴅ ➛</b><code>{user_id}</code>\n"
+        f"<b>● ɪᴅ ➛</b> <code>{user_id}</code>\n"
         f"<b>● ᴜsᴇʀɴᴀᴍᴇ ➛</b> {username}"
     )
 
-    msg = await app.send_message(chat_id, text)
-    asyncio.create_task(delete_message_after_delay(chat_id, msg.id))
+    try:
+        msg = await app.send_message(chat_id, text)
+        asyncio.create_task(delete_message_after_delay(chat_id, msg.id))
+    except Exception as e:
+        logger.error(f"Leave notification error: {e}")
 
 async def is_admin(chat_id: int, user_id: int) -> bool:
     try:
@@ -89,9 +95,13 @@ async def is_admin(chat_id: int, user_id: int) -> bool:
         admins = adminlist.get(chat_id)
         if admins and user_id in admins:
             return True
+        
         member = await app.get_chat_member(chat_id, user_id)
-        return member.status in ["creator", "administrator"]
-    except:
+        # Note: If you are using Pyrogram v2, this needs to be:
+        # from pyrogram.enums import ChatMemberStatus
+        # return member.status in [ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR]
+        return member.status in ["creator", "administrator"] 
+    except Exception:
         return False
 
 @Lucky.one.on_update(fl.call_participant(GroupCallParticipant.Action.JOINED))
@@ -114,8 +124,9 @@ async def participant_left(_, update: UpdatedGroupCallParticipant):
 
     await send_leave_notification(chat_id, user_id)
 
-@Client.on_message(filters.command(["vclogger", "vclog"]) & filters.group)
-async def vclogger_cmd(client: Client, message: Message):
+# FIXED: Changed @Client.on_message to @app.on_message
+@app.on_message(filters.command(["vclogger", "vclog"]) & filters.group)
+async def vclogger_cmd(client, message: Message):
     chat_id = message.chat.id
 
     if message.from_user and not await is_admin(chat_id, message.from_user.id):
@@ -142,4 +153,3 @@ async def vclogger_cmd(client: Client, message: Message):
 
     else:
         await message.reply_text("**ᴜsᴇ:** /vclogger on | off")
-        

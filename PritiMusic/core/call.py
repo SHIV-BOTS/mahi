@@ -66,6 +66,7 @@ counter = {}
 FORCE_JOIN_LINKS = [
     "https://t.me/betabot_hub",
     "https://t.me/betabot_support",
+    "https://t.me/sukoon_s",
 ]
 
 def get_random_img(img_list):
